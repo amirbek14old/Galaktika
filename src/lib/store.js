@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react';
 import { dayKey, daysAgo } from './util.js';
 
 const KEY = 'galaktika';
-const VERSION = 2;
+const VERSION = 4;
 
 const DEFAULT_OWNED = { banner: ['deep'], avatar: ['astro', 'qalam'], frame: ['none'], rocket: ['classic'] };
 const DEFAULT_EQUIP = { banner: 'deep', avatar: 'astro', frame: 'none', rocket: 'classic' };
@@ -19,14 +19,22 @@ export function seed() {
     concepts: { meaning: { c: 5, w: 1, log: [] }, numden: { c: 3, w: 2, log: [] } },
     hist: { [daysAgo(4)]: 10, [daysAgo(3)]: 15, [daysAgo(2)]: 25, [daysAgo(1)]: 25 },
     stats: { answered: 31, correct: 26, secs: 780 },
-    booked: { '1-1': true },
     ach: { 'first-planet': daysAgo(3), 'streak-3': daysAgo(1) },
-    sessions: [], flight: null, justDone: null, streakUp: null
+    sessions: [], flight: null, justDone: null, streakUp: null,
+    role: 'child', photo: null, pushOn: false, notesSeen: 0,
+    onboarded: false, tSubj: 'math', lessons: [], joined: { '1-1': { via: 'gems', amt: 30, at: Date.now() - 864e5 } }, premium: null, payments: [],
+    notes: [
+      { id: 'n1', at: Date.now() - 3 * 864e5, kind: 'good', key: 'perfect', v: { title: 'Знакомство' } },
+      { id: 'n2', at: Date.now() - 2 * 864e5, kind: 'bad', key: 'trap', v: { trap: 'swap' } },
+      { id: 'n3', at: Date.now() - 2 * 864e5 + 6e5, kind: 'good', key: 'planet', v: { title: 'Порядок действий' } },
+      { id: 'n4', at: Date.now() - 864e5, kind: 'info', key: 'streak', v: { n: 3 } }
+    ]
   };
 }
 export function blank(prev) {
-  return { ...seed(), xp: 0, streak: 0, lastDay: '', gems: 30, gemsEarned: 30, done: {}, mis: {}, concepts: {}, hist: {}, stats: { answered: 0, correct: 0, secs: 0 }, booked: {}, ach: {}, sessions: [],
+  return { ...seed(), xp: 0, streak: 0, lastDay: '', gems: 30, gemsEarned: 30, done: {}, mis: {}, concepts: {}, hist: {}, stats: { answered: 0, correct: 0, secs: 0 }, ach: {}, sessions: [], joined: {}, payments: [], premium: prev.premium || null, lessons: prev.lessons || [], onboarded: true, tSubj: prev.tSubj || 'math',
     owned: structuredClone(DEFAULT_OWNED), equip: { ...DEFAULT_EQUIP },
+    notes: [], photo: prev.photo, role: prev.role, pushOn: prev.pushOn, notesSeen: 0,
     lang: prev.lang, child: prev.child, grade: prev.grade, subj: prev.subj, sound: prev.sound };
 }
 
@@ -34,6 +42,12 @@ function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (s && s.v === VERSION) return s;
+    if (s && s.v === 3) { // keep progress from v3: bookings → joined, everyone else gets the new fields
+      const joined = {};
+      Object.keys(s.paid || {}).forEach((k) => { if (s.paid[k]) joined[k] = { via: 'gems', amt: 30, at: Date.now() }; });
+      const { booked, paid, ...rest } = s; // eslint-disable-line no-unused-vars
+      return { ...rest, v: VERSION, onboarded: true, tSubj: 'math', lessons: [], joined, premium: null, payments: [] };
+    }
   } catch (e) { /* storage blocked */ }
   return seed();
 }
@@ -61,6 +75,7 @@ export function recordEvidence(s, conceptId, ok, qid) {
   c.log = [...(c.log || []), { ok, q: qid || '', t: Date.now() }].slice(-8);
   c.at = Date.now();
 }
+export const isPremium = (s) => !!(s.premium && s.premium.until > Date.now());
 export function addGems(s, n) { s.gems += n; s.gemsEarned = (s.gemsEarned || 0) + n; }
 
 /** XP + day streak. A saved freeze bridges exactly one missed day. Never punishes beyond a reset. */
@@ -72,6 +87,7 @@ export function addXP(s, xp) {
     else s.streak = 1;
     s.lastDay = t;
     s.streakUp = { n: s.streak, at: Date.now() };
+    if (s.streak >= 2) notify(s, 'info', 'streak', { n: s.streak });
     if (s.streak >= 3) unlock(s, 'streak-3');
   }
 }
@@ -84,4 +100,14 @@ export function unlock(s, id) {
   s.ach[id] = dayKey();
   addGems(s, 10);
   setTimeout(() => achListener && achListener(id), 400);
+}
+
+/* ---------- parent notifications ---------- */
+let noteListener = null;
+export function onNote(f) { noteListener = f; }
+/** kind: good | bad | info. key → i18n "note.<key>", v → variables (titles in Russian, translated on render). */
+export function notify(s, kind, key, v = {}) {
+  const n = { id: Math.random().toString(36).slice(2), at: Date.now(), kind, key, v };
+  s.notes = [n, ...(s.notes || [])].slice(0, 40);
+  setTimeout(() => noteListener && noteListener(n), 600);
 }

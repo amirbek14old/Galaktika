@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore, update, recordEvidence, unlock, addXP, addGems } from '../lib/store.js';
+import { useStore, update, recordEvidence, unlock, addXP, addGems, notify } from '../lib/store.js';
 import { INITIAL, priorsFor, update as bayes, nextQuestion, conclude, status, STATUS, estimate } from '../lib/diagnostic.js';
 import { CONCEPTS, MICRO } from '../data/concepts.js';
 import InlineQuestion from '../components/InlineQuestion.jsx';
@@ -50,6 +50,7 @@ export default function Diagnostic({ params }) {
     setVerdict(v); setStage('result'); sfx.win();
     update((s) => {
       unlock(s, 'first-diag'); addXP(s, 10); addGems(s, 5);
+      if (v.h && v.h !== 'slip') notify(s, 'bad', 'diag', { cause: v.h });
       s.sessions = [...(s.sessions || []), { at: Date.now(), first: first ? `${first.n}/${first.d}` : '', asked: asked.length, hypothesis: v.h, p: v.p ? Math.round(v.p * 100) : null, concept: v.concept }].slice(-10);
     });
   };
@@ -68,8 +69,8 @@ export default function Diagnostic({ params }) {
             <InlineQuestion key={cur.uid} q={cur} onAnswered={onFollow} onNext={afterFollow} />
           </>}
           {stage === 'result' && <Verdict v={verdict} log={log} onLesson={() => setStage('lesson')} onRestart={start} />}
-          {stage === 'lesson' && <MicroLesson conceptId={verdict.concept} onFinish={() => setStage('done')} onMap={() => ui.go('map')} />}
-          {stage === 'done' && <Done conceptId={verdict.concept} onMap={() => ui.go('map')} onRestart={start} />}
+          {stage === 'lesson' && <MicroLesson conceptId={verdict.concept} onFinish={() => setStage('done')} onMap={() => ui.go('galaxy')} />}
+          {stage === 'done' && <Done conceptId={verdict.concept} onMap={() => ui.go('galaxy')} onRestart={start} />}
         </div>
         {(post || log.length > 0) && stage !== 'lesson' && stage !== 'done' && <Investigation post={post} log={log} />}
       </div>
@@ -158,7 +159,7 @@ export function MicroLesson({ conceptId, onFinish, onMap }) {
       const ok = score.length === qs.reassess.length && score.every(Boolean);
       update((s) => {
         addXP(s, 15);
-        if (ok) { addGems(s, 10); unlock(s, 'gap-closed'); }
+        if (ok) { addGems(s, 10); unlock(s, 'gap-closed'); notify(s, 'good', 'gap', { c: conceptId }); }
         if (CONCEPTS.every((c) => status(s.concepts[c.id]?.c, s.concepts[c.id]?.w) === 'mastered')) unlock(s, 'frac-master');
       });
       if (ok) { confetti(); sfx.win(); }
@@ -187,7 +188,7 @@ export function MicroLesson({ conceptId, onFinish, onMap }) {
             {alt ? <Html as="div" className="alt" html={F(m.alt)} /> : <button className="link-btn" onClick={() => setAlt(true)}>{t('micro.showAlt')}</button>}
           </>}
           <div className="row">
-            <button className="btn" onClick={onMap}>{t('rail.openMap')}</button>
+            <button className="btn" onClick={onMap}>{t('toGalaxy')}</button>
             {!passed && <button className="btn ghost" onClick={() => { setScore([]); setStep(cards); }}>{t('micro.again')}</button>}
             {passed && onFinish && <button className="btn ghost" onClick={onFinish}>{t('next')}</button>}
           </div>
@@ -206,7 +207,7 @@ function Done({ conceptId, onMap, onRestart }) {
     <div className="card verdict">
       <div className="sheet-h"><Mascot /><div><span className={'chip ' + st.cls}>{t(st.key)}</span><h2 style={{ marginTop: 6 }}>{t('c.' + conceptId)}</h2></div></div>
       <p>{t('done.text', { p: Math.round(estimate(ev.c, ev.w) * 100), n: ev.c + ev.w })}</p>
-      <div className="row"><button className="btn" onClick={onMap}>{t('nav.map')}</button><button className="btn ghost" onClick={onRestart}>{t('newDiag')}</button></div>
+      <div className="row"><button className="btn" onClick={onMap}>{t('toGalaxy')}</button><button className="btn ghost" onClick={onRestart}>{t('newDiag')}</button></div>
     </div>
   );
 }

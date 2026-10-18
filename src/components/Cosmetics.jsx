@@ -2,6 +2,7 @@
 import { useId } from 'react';
 import { item } from '../data/shop.js';
 import { Mascot } from './ui.jsx';
+import { useStore } from '../lib/store.js';
 
 /** Crystal coin — the app currency. */
 export function Crystal({ size = 22, className = '' }) {
@@ -90,12 +91,24 @@ export function BannerArt({ id }) {
       {[[40, 140, 30, 70], [90, 140, 22, 50], [150, 140, 40, 95], [230, 140, 26, 60], [290, 140, 44, 105], [360, 140, 30, 75]].map(([x, y, w, h], i) => (
         <g key={i}><path d={`M${x - w / 2} ${y} L${x - w / 3} ${y - h * 0.8} L${x} ${y - h} L${x + w / 3} ${y - h * 0.8} L${x + w / 2} ${y}Z`} fill={i % 2 ? '#6D28D9' : '#0EA5E9'} opacity=".9" />
           <path d={`M${x} ${y - h} L${x + w / 3} ${y - h * 0.8} L${x + w / 2} ${y} L${x} ${y}Z`} fill="#fff" opacity=".18" /></g>))}</>; break;
+    case 'royal': body = <>
+      <rect width="400" height="140" fill={`url(#${g('royal')})`} /><Stars op={0.7} />
+      <g fill="none" stroke="#FCD34D" strokeOpacity=".55" strokeWidth="1.5">{[0, 1, 2, 3].map((i) => <path key={i} d={`M${-20 + i * 120} 140 Q ${40 + i * 120} ${60 - (i % 2) * 20} ${100 + i * 120} 140`} />)}</g>
+      <g transform="translate(300 34)"><path d="M0 34 L4 8 L16 22 L26 0 L36 22 L48 8 L52 34Z" fill="#FCD34D" stroke="#B45309" strokeWidth="2" strokeLinejoin="round" /><rect x="0" y="34" width="52" height="8" rx="2" fill="#F59E0B" /><circle cx="26" cy="38" r="3" fill="#EC4899" /><circle cx="12" cy="38" r="2" fill="#22D3EE" /><circle cx="40" cy="38" r="2" fill="#22D3EE" /></g></>; break;
+    case 'blackhole': body = <>
+      <rect width="400" height="140" fill="#05030F" /><Stars op={0.8} />
+      <g transform="rotate(-10 200 72)"><ellipse cx="200" cy="72" rx="150" ry="26" fill="none" stroke={`url(#${g('disk')})`} strokeWidth="14" opacity=".9" filter={`url(#${g('soft')})`} /></g>
+      <circle cx="200" cy="72" r="36" fill="#000" stroke="#F59E0B" strokeOpacity=".7" strokeWidth="2" />
+      <g transform="rotate(-10 200 72)"><path d="M50 72 A150 26 0 0 0 350 72" fill="none" stroke={`url(#${g('disk')})`} strokeWidth="10" /></g></>; break;
     default: body = <><rect width="400" height="140" fill={`url(#${g('deep')})`} /><Stars /><circle cx="340" cy="40" r="18" fill="#334155" /><circle cx="334" cy="34" r="18" fill="#475569" opacity=".5" /></>;
   }
   return (
     <svg className="banner-art" viewBox="0 0 400 140" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
         <filter id={g('bl')}><feGaussianBlur stdDeviation="14" /></filter>
+        <filter id={g('soft')}><feGaussianBlur stdDeviation="3" /></filter>
+        <linearGradient id={g('royal')} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#3B0764" /><stop offset=".55" stopColor="#6D28D9" /><stop offset="1" stopColor="#1E1B4B" /></linearGradient>
+        <linearGradient id={g('disk')} x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#F97316" /><stop offset=".5" stopColor="#FDE68A" /><stop offset="1" stopColor="#A855F7" /></linearGradient>
         <linearGradient id={g('sky')} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7C2D12" /><stop offset=".6" stopColor="#EA580C" /><stop offset="1" stopColor="#FDBA74" /></linearGradient>
         <linearGradient id={g('tr')} x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
         <radialGradient id={g('pl')} cx="35%" cy="35%"><stop offset="0" stopColor="#FDE68A" /><stop offset=".6" stopColor="#D97706" /><stop offset="1" stopColor="#78350F" /></radialGradient>
@@ -110,13 +123,15 @@ export function BannerArt({ id }) {
 /** Avatar art (circle). */
 export function AvatarArt({ id }) {
   const u = useId().replace(/:/g, '');
+  const photo = useStore((s) => s.photo);
+  if (id === 'photo' && photo) return <img className="ava-art photo" src={photo} alt="" />;
   if (id === 'qalam') return <span className="ava-art qalam"><Mascot /></span>;
   let art;
   switch (id) {
     case 'moon': art = <><rect width="64" height="64" fill="#1E1B4B" /><circle cx="32" cy="32" r="20" fill="#FDE68A" /><circle cx="40" cy="26" r="18" fill="#1E1B4B" /><circle cx="22" cy="30" r="2" fill="#78350F" /><path d="M20 38 q4 3 8 0" stroke="#78350F" strokeWidth="2" fill="none" strokeLinecap="round" /><circle cx="48" cy="46" r="1.4" fill="#fff" /><circle cx="52" cy="18" r="1" fill="#fff" /></>; break;
     case 'alien': art = <><rect width="64" height="64" fill="#0F2A1C" /><path d="M24 14 l-4 -8 M40 14 l4 -8" stroke="#86EFAC" strokeWidth="2.5" strokeLinecap="round" /><circle cx="20" cy="6" r="2.5" fill="#FDE047" /><circle cx="44" cy="6" r="2.5" fill="#FDE047" /><ellipse cx="32" cy="36" rx="20" ry="24" fill="#4ADE80" /><ellipse cx="24" cy="34" rx="6" ry="8" fill="#052E16" transform="rotate(-15 24 34)" /><ellipse cx="40" cy="34" rx="6" ry="8" fill="#052E16" transform="rotate(15 40 34)" /><circle cx="22" cy="31" r="1.6" fill="#fff" /><circle cx="38" cy="31" r="1.6" fill="#fff" /><path d="M28 48 q4 3 8 0" stroke="#052E16" strokeWidth="2" fill="none" strokeLinecap="round" /></>; break;
     case 'robot': art = <><rect width="64" height="64" fill="#172033" /><line x1="32" y1="8" x2="32" y2="16" stroke="#94A3B8" strokeWidth="2.5" /><circle cx="32" cy="7" r="3" fill="#F87171" /><rect x="14" y="16" width="36" height="32" rx="9" fill="#CBD5E1" /><rect x="19" y="23" width="26" height="13" rx="6" fill="#0F172A" /><circle cx="26" cy="29.5" r="3" fill="#22D3EE" /><circle cx="38" cy="29.5" r="3" fill="#22D3EE" /><rect x="25" y="40" width="14" height="3" rx="1.5" fill="#64748B" /><rect x="20" y="50" width="24" height="10" rx="4" fill="#94A3B8" /></>; break;
-    case 'meteor': art = <><rect width="64" height="64" fill="#1A1020" /><Meteor size={64} /></>; break;
+    case 'meteor': art = <><rect width="64" height="64" fill="#1A1020" /><svg x="8" y="8" width="48" height="48" viewBox="0 0 64 64"><Meteor size={64} /></svg></>; break;
     default: art = <>
       <rect width="64" height="64" fill="#13224A" />
       <circle cx="32" cy="34" r="22" fill="#F1F5F9" /><circle cx="32" cy="34" r="22" fill="none" stroke="#94A3B8" strokeWidth="2" />

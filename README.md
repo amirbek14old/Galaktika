@@ -24,9 +24,8 @@ Requirements: Node 18+. No backend or API keys are needed. Progress is saved in 
 | **Subjects** | Grades 1–11, plus 11 subjects that become available by grade (physics from grade 6, chemistry from grade 7, and so on). |
 | **Diagnostics** | A Bayesian engine over named hypotheses. It picks the follow-up question with the greatest information gain, shows its probabilities and the evidence behind them, then recommends a mini-lesson. |
 | **Mini-lesson** | Goal → explanation → visual → worked example → guided practice with a hint → independent practice → re-test on new questions. If the re-test fails, it offers an alternative explanation. |
-| **Knowledge map** | A constellation of fraction concepts with their prerequisites. Each star's colour is calculated from the real answers (the Beta-Bernoulli mean plus the amount of evidence). |
 | **"Trap" detection** | Inside the fraction missions, a typical mistake (for example 1/4 + 2/4 = 3/8) triggers a "Why?" explanation and adds a targeted task. |
-| **Online lessons** | A demo schedule of live lessons with booking. The teachers are fictional and labelled as such. |
+| **Online lessons** | Teachers create appointments. Students join group classes for crystals or open lessons for $1.50, and can raise their hand to get the floor. |
 | **For parents** | A report without grades: topics to review, traps, a 5-minute activity to do at home, and a copy button for Telegram. |
 | **Achievements** | Awarded only for meaningful actions: first planet, first diagnostic, closing a gap, and so on. |
 
@@ -40,6 +39,28 @@ Requirements: Node 18+. No backend or API keys are needed. Progress is saved in 
 - **Russian / O'zbekcha / English** for the interface, subjects and topic titles. Question and theory text is still in Russian.
 - Hand-drawn touches: the mascot's greeting, a "you are here!" note, and underlined headings.
 
+## New in v4
+
+- **One app for two roles**: in the profile you choose *student* or *parent* and set the grade. Parent mode opens the **Report**, which has the notifications feed, stats and tips for home.
+- **Parent notifications**: wins (a mission with no mistakes, a whole planet, a closed gap) and problems (low accuracy, a repeated trap, a diagnostic result). They can also come as browser notifications on the device.
+- **Photo avatar**: upload any picture; it's cropped to a circle and saved on the device.
+- **Video classes for crystals**: classes with professors cost 30–40 ◆, and cancelling refunds them. The classroom has an animated teacher, a board, a chat, "raise hand" and your own camera. The teacher is a demo; a real video service plugs in here.
+- New purple and dark-blue design with background planets.
+
+## New in v5
+
+- **The knowledge map is gone.** Diagnostics now leads back to the Galaxy.
+- **Creating a profile (onboarding)**: language → role (student / parent / **teacher**) → name → grade (or subject for teachers). Profile → "New profile" starts it again.
+- **Teacher role**: the "My classes" page shows earnings (80% to the teacher, 20% to the platform). Teachers create appointments with a topic, subject, grades, date/time, length, and either a small group paid in crystals or an open lesson for $1.50. They run the class in host mode, where they see the queue of raised hands and click "Give the floor".
+- **Open lesson for $1.50**: no seat limit. The checkout shows the split: $1.20 to the teacher and $0.30 to Galaktika. In class, a raised hand leads to the teacher giving you the floor and your microphone turning on.
+- **Premium for $10/month**: the Royal and Black hole banners, a Crown frame, a Premium badge, unlimited hearts, ×2 crystals for missions, and **5 free online lessons**.
+- Payments are a **demo**: no money is charged and no card details are asked for. Payme, Click or Stripe plug in at `components/Pay.jsx → Checkout`.
+- For appointments to be visible across devices you need a server (for example Supabase: `lessons`, `bookings` and `payments` tables) and a video service (LiveKit or Jitsi). For now everything is stored in localStorage on one device, and the other students in a class are simulated.
+
+## New in v6
+
+- **"Squared notebook" design**: a white and grey page with a light grid and a red margin line, white cards and dark text. The video classroom and the streak celebration stay dark on purpose.
+
 ## Structure
 
 ```
@@ -48,9 +69,10 @@ src/
               store.js (state + localStorage), fx.js (sounds and animations), util.js
   data/       subjects.js (subject × grade → planets), math.js (task generators for grades 1–11),
               banks.js (question banks for other subjects), fractions.js (fractions + traps),
-              concepts.js (concept map + mini-lessons), tutors.js
+              concepts.js (concepts + mini-lessons), tutors.js, lessons.js (appointments, 80/20 split, Premium)
   components/ Lesson (mission player), QuestionBody, InlineQuestion, Starfield, ui
-  pages/      Galaxy, Subjects, Diagnostic, KnowledgeMap, Online, Parents, Profile
+  pages/      Galaxy, Subjects, Diagnostic, Online (student + teacher), Shop, ParentHome, Profile
+  components/ VideoRoom (student / host), Pay (Checkout, Premium), Onboarding
 ```
 
 ## 3-minute demo script
@@ -58,12 +80,13 @@ src/
 1. **Galaxy**: show the planets, open the current planet, and start a mission. Give one wrong answer on purpose to show the animation and the "trap" with its "Why?" button.
 2. **Diagnostics**: type **2/5** for the problem 1/2 + 1/3. Show how the probabilities on the right change after each follow-up question.
 3. **Conclusion**: open "What the conclusion is based on", then start the mini-lesson and pass the re-test.
-4. **Knowledge map**: the stars have changed colour based on the real answers.
-5. **For parents**: the report and the advice for home.
+4. **Teacher**: Profile → "I'm a teacher" → "Open lesson right now" → Start class → give the floor to a raised hand.
+5. **Student**: switch back to student → Online → the teacher's lesson is in the schedule → $1.50 → raise your hand.
+6. **Premium**: $10 → 5 free lessons, the crown, ∞ hearts.
 
 ## Limitations
 
 - The interface is in Russian; the Uzbek version is the next step.
-- The full diagnostic and knowledge map cover fractions (grade 5). For the other topics, tasks are generated or taken from the question banks.
+- The full diagnostic covers fractions (grade 5). For the other topics, tasks are generated or taken from the question banks.
 - Online lessons are a demo with no video connection.
 - The mastery estimate is an educational hint, not a final verdict.

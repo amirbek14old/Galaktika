@@ -8,7 +8,9 @@ export const SHOP = {
     { id: 'starfall', price: 100, name: ['Звездопад', 'Yulduz yomg‘iri', 'Starfall'] },
     { id: 'saturn', price: 120, name: ['Кольца Сатурна', 'Saturn halqalari', 'Saturn’s rings'] },
     { id: 'samarkand', price: 150, name: ['Ночной Самарканд', 'Tungi Samarqand', 'Samarkand by night'] },
-    { id: 'crystals', price: 180, name: ['Кристальная пещера', 'Billur g‘ori', 'Crystal cave'] }
+    { id: 'crystals', price: 180, name: ['Кристальная пещера', 'Billur g‘ori', 'Crystal cave'] },
+    { id: 'royal', price: 0, premium: true, name: ['Королевский', 'Qirollik', 'Royal'] },
+    { id: 'blackhole', price: 0, premium: true, name: ['Чёрная дыра', 'Qora tuynuk', 'Black hole'] }
   ],
   avatar: [
     { id: 'astro', price: 0, name: ['Астронавт', 'Kosmonavt', 'Astronaut'] },
@@ -23,7 +25,8 @@ export const SHOP = {
     { id: 'gold', price: 50, name: ['Золото', 'Oltin', 'Gold'] },
     { id: 'neon', price: 80, name: ['Неон', 'Neon', 'Neon'] },
     { id: 'plasma', price: 110, name: ['Плазма', 'Plazma', 'Plasma'] },
-    { id: 'rainbow', price: 160, name: ['Радуга', 'Kamalak', 'Rainbow'] }
+    { id: 'rainbow', price: 160, name: ['Радуга', 'Kamalak', 'Rainbow'] },
+    { id: 'crown', price: 0, premium: true, name: ['Корона', 'Toj', 'Crown'] }
   ],
   rocket: [
     { id: 'classic', price: 0, name: ['Классика', 'Klassik', 'Classic'], c: ['#E2E8F0', '#F87171', '#22D3EE'] },

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useStore, update, unlock } from '../lib/store.js';
+import { useStore, update, unlock, isPremium } from '../lib/store.js';
+import { PremiumSheet, Crown } from '../components/Pay.jsx';
 import { SHOP, nameOf } from '../data/shop.js';
 import { BannerArt, Avatar, RocketArt, Crystal } from '../components/Cosmetics.jsx';
 import { useUI, I } from '../components/ui.jsx';
@@ -17,8 +18,10 @@ export default function Shop() {
   const [kind, setKind] = useState('banner');
   const [preview, setPreview] = useState(null);
 
-  const owned = (k, id) => (s.owned[k] || []).includes(id);
+  const prem = isPremium(s);
+  const owned = (k, id) => (s.owned[k] || []).includes(id) || (prem && SHOP[k].find((x) => x.id === id)?.premium);
   const buy = (k, it, el) => {
+    if (it.premium && !prem) { ui.showModal(<PremiumSheet />); return; }
     if (s.gems < it.price) { sfx.bad(); el?.classList.remove('shake'); void el?.offsetWidth; el?.classList.add('shake'); ui.toast(t('shop.short', { n: it.price - s.gems })); return; }
     if (k === 'boost') {
       if (it.id === 'hearts' && s.hearts >= 5) { ui.toast(t('shop.full')); return; }
@@ -43,16 +46,17 @@ export default function Shop() {
         <div><h1 className="page-title scribble">{t('shop.title')}</h1><p className="page-sub">{t('shop.sub')}</p></div>
         <div className="wallet" aria-label={t('shop.balance')}><Crystal size={40} className="spin" /><div><small>{t('shop.balance')}</small><b>{s.gems}</b></div></div>
       </div>
+      {!prem && <button className="prem-promo card" onClick={() => ui.showModal(<PremiumSheet />)}><Crown /><div><b>{t('prem.promo')}</b><small>{t('prem.promoSub')}</small></div><span className="btn sm prem-btn">{t('prem.more')}</span></button>}
       <ProfileCard look={look} name={s.child} xp={s.xp} small />
       <p className="note hand" style={{ margin: '8px 4px 16px' }}>↑ {t('shop.preview')}</p>
       <div className="tabs shop-tabs" role="tablist">
         {KINDS.map((k) => <button key={k} role="tab" aria-selected={kind === k} className={kind === k ? 'on' : ''} onClick={() => { setKind(k); setPreview(null); }}>{t('shop.' + k)}</button>)}
       </div>
-      <div className={'shop-grid ' + kind}>
+      <div className={'shop-grid kind-' + kind}>
         {SHOP[kind].map((it) => {
           const have = kind !== 'boost' && owned(kind, it.id), on = s.equip[kind] === it.id;
           return (
-            <div key={it.id} className={'shop-item card' + (on ? ' equipped' : '')} onMouseEnter={() => setPreview({ k: kind, id: it.id })} onFocus={() => setPreview({ k: kind, id: it.id })}>
+            <div key={it.id} className={'shop-item card' + (on ? ' equipped' : '') + (it.premium ? ' prem-item' : '')} onMouseEnter={() => setPreview({ k: kind, id: it.id })} onFocus={() => setPreview({ k: kind, id: it.id })}>
               <div className="si-art">
                 {kind === 'banner' && <BannerArt id={it.id} />}
                 {kind === 'avatar' && <Avatar avatar={it.id} frame={s.equip.frame} size={76} />}
@@ -62,11 +66,12 @@ export default function Shop() {
               </div>
               <div className="si-meta">
                 <b>{nameOf(it, t.lang)}</b>
+                {it.premium && <small className="prem-tag"><Crown /> Premium</small>}
                 {it.desc && <small className="muted">{nameOf({ name: it.desc }, t.lang)}</small>}
                 {kind === 'boost' && it.id === 'freeze' && <small className="muted">{t('shop.have', { n: s.freezes || 0 })}</small>}
               </div>
               {kind === 'boost' || !have
-                ? <button className={'btn sm buy' + (s.gems < it.price ? ' poor' : '')} onClick={(e) => buy(kind, it, e.currentTarget)}>{it.price ? <><Crystal size={16} /> {it.price}</> : t('shop.free')}</button>
+                ? <button className={'btn sm buy' + (s.gems < it.price ? ' poor' : '')} onClick={(e) => buy(kind, it, e.currentTarget)}>{it.premium ? <><Crown /> Premium</> : it.price ? <><Crystal size={16} /> {it.price}</> : t('shop.free')}</button>
                 : on ? <span className="chip ok">{t('shop.equipped')}</span>
                   : <button className="btn ghost sm" onClick={() => equip(kind, it.id)}>{t('shop.equip')}</button>}
             </div>

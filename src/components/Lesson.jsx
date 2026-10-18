@@ -3,7 +3,7 @@ import QuestionBody from './QuestionBody.jsx';
 import { Html, I, Mascot, icon, useUI } from './ui.jsx';
 import { Crystal } from './Cosmetics.jsx';
 import { initAnswer, isReady, evaluate, answerHTML, prep } from '../lib/questions.js';
-import { update, getState, recordEvidence, addXP, addGems, unlock, useStore } from '../lib/store.js';
+import { update, getState, recordEvidence, addXP, addGems, unlock, useStore, notify, isPremium } from '../lib/store.js';
 import { MIS, REM } from '../data/fractions.js';
 import { planetsFor, planetDone } from '../data/subjects.js';
 import { tt } from '../data/titles.js';
@@ -16,6 +16,7 @@ export default function Lesson({ cfg, onClose }) {
   const ui = useUI();
   const t = useT();
   const hearts = useStore((s) => s.hearts);
+  const prem = useStore(isPremium);
   const gems = useStore((s) => s.gems);
   const [shownGems, setShownGems] = useState(gems);
   const [st, setSt] = useState(() => {
@@ -40,7 +41,7 @@ export default function Lesson({ cfg, onClose }) {
         recordEvidence(s, concept(q), true, q.id || q.prompt);
         if (q.remed) { const m = s.mis[q.remed] || (s.mis[q.remed] = { wrong: 0, fixed: 0 }); m.fixed++; }
       } else {
-        s.hearts = Math.max(0, s.hearts - 1);
+        if (!isPremium(s)) s.hearts = Math.max(0, s.hearts - 1);
         if (!skipped) recordEvidence(s, r.mis ? MIS[r.mis].concept : concept(q), false, q.id || q.prompt);
         if (r.mis) { const m = s.mis[r.mis] || (s.mis[r.mis] = { wrong: 0, fixed: 0 }); m.wrong++; }
       }
@@ -109,7 +110,14 @@ export default function Lesson({ cfg, onClose }) {
           flight = { key: `${l.subj}-${l.grade}`, from: l.planet, to: nextP ? nextP.t : null, title: nextP?.title || null, done: p.title };
         }
       }
+      if (isPremium(s)) earned *= 2;
       addGems(s, earned);
+      // notes for the parent
+      const ptitle = l ? planetsFor(l.subj, l.grade).find((x) => x.t === l.planet)?.title : null;
+      if (ptitle && perfect) notify(s, 'good', 'perfect', { title: ptitle });
+      else if (ptitle && acc < 70) notify(s, 'bad', 'struggle', { title: ptitle, acc });
+      Object.keys(st.remAdded).forEach((k) => notify(s, 'bad', 'trap', { trap: k }));
+      if (flight) notify(s, 'good', 'planet', { title: flight.done });
     });
     setResult({ xp, acc, secs, flight, perfect, earned });
     setPhase('result'); sfx.win(); confetti();
@@ -160,7 +168,7 @@ export default function Lesson({ cfg, onClose }) {
         <button className="icon-btn" onClick={() => onClose()} aria-label={t('leave')}><I n="close" /></button>
         <div className="l-bar" ref={barRef} role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin="0" aria-valuemax="100"><div style={{ width: pct + '%' }} /></div>
         <span className="stat gem" ref={gemRef} title={t('crystalsW')}><Crystal size={22} />{shownGems}</span>
-        <span className="stat heart" ref={heartRef} title={t('hearts')}><I n="heart" />{hearts}</span>
+        <span className="stat heart" ref={heartRef} title={t('hearts')}><I n="heart" />{prem ? '∞' : hearts}</span>
       </header>
       <div className="l-body" ref={qRef}>
         {phase === 'hearts' ? (
