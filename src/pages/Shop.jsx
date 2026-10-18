@@ -48,7 +48,7 @@ export default function Shop() {
       <div className="tabs shop-tabs" role="tablist">
         {KINDS.map((k) => <button key={k} role="tab" aria-selected={kind === k} className={kind === k ? 'on' : ''} onClick={() => { setKind(k); setPreview(null); }}>{t('shop.' + k)}</button>)}
       </div>
-      <div className={'shop-grid ' + kind}>
+      <div className={'shop-grid kind-' + kind}>
         {SHOP[kind].map((it) => {
           const have = kind !== 'boost' && owned(kind, it.id), on = s.equip[kind] === it.id;
           return (

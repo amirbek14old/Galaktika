@@ -3,8 +3,40 @@ import { useStore, update, setState, seed, blank, getState, ACH_IDS } from '../l
 import { subj } from '../data/subjects.js';
 import { SHOP, nameOf } from '../data/shop.js';
 import { Html, icon, I, useUI } from '../components/ui.jsx';
+import { sfx } from '../lib/fx.js';
 import { BannerArt, Avatar, Crystal, Meteor } from '../components/Cosmetics.jsx';
 import { useT, LANGS } from '../lib/i18n.js';
+
+/** Any picture → 256×256 centre-cropped JPEG data URL (stays small enough for local storage). */
+export function readPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const n = 256, c = document.createElement('canvas'); c.width = c.height = n;
+      const m = Math.min(img.width, img.height);
+      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, n, n);
+      URL.revokeObjectURL(url); resolve(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')); };
+    img.src = url;
+  });
+}
+
+function PhotoButton({ onDone }) {
+  const t = useT();
+  const ui = useUI();
+  const pick = async (e) => {
+    const f = e.target.files?.[0]; e.target.value = '';
+    if (!f) return;
+    try { const data = await readPhoto(f); update((x) => { x.photo = data; x.equip.avatar = 'photo'; }); sfx.coin(); onDone && onDone(); }
+    catch (err) { ui.toast(t('prof.photoErr')); }
+  };
+  return (
+    <label className="btn ghost sm photo-btn"><I n="camera" /> {t('prof.photo')}
+      <input type="file" accept="image/*" onChange={pick} hidden />
+    </label>
+  );
+}
 
 const rankOf = (xp) => (xp < 100 ? 0 : xp < 300 ? 1 : xp < 800 ? 2 : 3);
 
@@ -34,7 +66,25 @@ export default function Profile() {
       <ProfileCard look={s.equip} name={s.child} xp={s.xp}>
         <button className="btn ghost sm edit-btn" onClick={() => ui.showModal(<EditProfile />)}><I n="edit" /> {t('prof.edit')}</button>
       </ProfileCard>
-      <div className="pstats">
+      <div className="photo-row">
+        <PhotoButton />
+        {s.photo && <button className="btn ghost sm" onClick={() => update((x) => { x.photo = null; if (x.equip.avatar === 'photo') x.equip.avatar = 'astro'; })}>{t('prof.photoRemove')}</button>}
+        <small className="muted">{t('prof.photoHint')}</small>
+      </div>
+      <h2 className="h2">{t('role.title')}</h2>
+      <div className="roles">
+        {['child', 'parent'].map((r) => (
+          <button key={r} className={'role card' + (s.role === r ? ' on' : '')} aria-pressed={s.role === r} onClick={() => { update((x) => { x.role = r; }); sfx.tap(4); ui.go(r === 'parent' ? 'report' : 'galaxy'); }}>
+            <I n={r === 'parent' ? 'parents' : 'user'} />
+            <div><b>{t('role.' + r)}</b><small className="muted">{t('role.' + r + 'Sub')}</small></div>
+          </button>
+        ))}
+      </div>
+      <h2 className="h2">{s.role === 'parent' ? t('prof.childGrade') : t('prof.grade')}</h2>
+      <div className="grades" role="group" aria-label={t('prof.grade')}>
+        {Array.from({ length: 11 }, (_, i) => <button key={i} className={'gchip' + (s.grade === i + 1 ? ' on' : '')} aria-pressed={s.grade === i + 1} onClick={() => { sfx.tap(i); update((x) => { x.grade = i + 1; if (subj(x.subj).from > i + 1 || subj(x.subj).to < i + 1) x.subj = 'math'; }); }}>{i + 1}</button>)}
+      </div>
+      <div className="pstats" style={{ marginTop: 18 }}>
         <div><Meteor size={30} lit={s.streak > 0} /><b>{s.streak}</b><small>{t.pl('day', s.streak)} {t('inRowW')}</small></div>
         <div><Crystal size={28} /><b>{s.gems}</b><small>{t('crystalsW')}</small></div>
         <div><I n="bolt" /><b>{s.xp}</b><small>{t('xp')}</small></div>
@@ -56,7 +106,6 @@ export default function Profile() {
       <div className="setting"><div><b>{t('prof.gradeSubj')}</b><p className="muted small">{t('subj.' + subj(s.subj).id)}, {t('grade', { n: s.grade })}</p></div><button className="btn ghost sm" onClick={() => ui.go('subjects')}>{t('change')}</button></div>
       <div className="setting"><div><b>{t('nav.map')}</b></div><button className="btn ghost sm" onClick={() => ui.go('map')}>{t('open')}</button></div>
       <div className="setting"><div><b>{t('nav.online')}</b></div><button className="btn ghost sm" onClick={() => ui.go('online')}>{t('open')}</button></div>
-      <div className="setting"><div><b>{t('nav.parents')}</b></div><button className="btn ghost sm" onClick={() => ui.go('parents')}>{t('open')}</button></div>
       <div className="setting"><div><b>{t('prof.sound')}</b><p className="muted small">{t('prof.soundSub')}</p></div><button className="toggle" aria-pressed={s.sound} aria-label={t('prof.sound')} onClick={() => update((x) => { x.sound = !x.sound; })} /></div>
       <div className="setting"><div><b>{t('prof.reset')}</b><p className="muted small">{t('prof.resetSub')}</p></div>
         <button className={'btn sm ' + (sure ? 'red' : 'ghost')} onClick={() => { if (!sure) { setSure(true); return; } setState(blank(getState())); ui.toast(t('prof.resetDone')); ui.go('galaxy'); }}>{sure ? t('prof.sure') : t('prof.resetBtn')}</button></div>
@@ -74,6 +123,9 @@ function EditProfile() {
   const [look, setLook] = useState({ ...s.equip });
   const pick = (k) => (
     <div className="pick-row" role="group" aria-label={t('shop.' + k)}>
+      {k === 'avatar' && s.photo && (
+        <button className={'pick' + (look.avatar === 'photo' ? ' on' : '')} title={t('prof.myPhoto')} onClick={() => setLook({ ...look, avatar: 'photo' })}><Avatar avatar="photo" size={48} /></button>
+      )}
       {SHOP[k].filter((it) => s.owned[k].includes(it.id)).map((it) => (
         <button key={it.id} className={'pick' + (look[k] === it.id ? ' on' : '')} aria-pressed={look[k] === it.id} title={nameOf(it, t.lang)} onClick={() => setLook({ ...look, [k]: it.id })}>
           {k === 'banner' ? <span className="pick-banner"><BannerArt id={it.id} /></span> : <Avatar avatar={k === 'avatar' ? it.id : look.avatar} frame={k === 'frame' ? it.id : 'none'} size={48} />}
@@ -87,6 +139,7 @@ function EditProfile() {
       <ProfileCard look={look} name={name || '…'} xp={s.xp} small />
       <label className="field-col"><span className="muted small">{t('prof.name')}</span><input value={name} maxLength={24} onChange={(e) => setName(e.target.value)} /></label>
       <b className="small">{t('shop.avatar')}</b>{pick('avatar')}
+      <PhotoButton onDone={() => setLook((l) => ({ ...l, avatar: 'photo' }))} />
       <b className="small">{t('shop.banner')}</b>{pick('banner')}
       <b className="small">{t('shop.frame')}</b>{pick('frame')}
       <button className="link-btn" onClick={() => ui.go('shop')}>{t('prof.inShop')} →</button>

@@ -7,6 +7,11 @@ export const useUI = () => useContext(UI);
 export const Html = ({ html, as: Tag = 'span', ...p }) => <Tag {...p} dangerouslySetInnerHTML={{ __html: html }} />;
 
 const IC = {
+  mic: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+  cam: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="3" fill="currentColor"/><path d="M16 10l5-3v10l-5-3z" fill="currentColor"/></svg>',
+  hand: '<svg class="i" viewBox="0 0 24 24"><path d="M8 12V5a1.5 1.5 0 013 0v6M11 11V3.5a1.5 1.5 0 013 0V11M14 11V5a1.5 1.5 0 013 0v8c0 4-2.5 7-6 7-2.5 0-4-1.2-5.5-3.5L3.6 13a1.4 1.4 0 012.3-1.6L8 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  bell: '<svg class="i" viewBox="0 0 24 24"><path d="M6 10a6 6 0 0112 0v4l2 3H4l2-3z" fill="currentColor"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="2" fill="none"/></svg>',
+  camera: '<svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
   book: '<svg class="i" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 21a2 2 0 012-2h13v2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M8 7h7M8 11h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   shop: '<svg viewBox="0 0 32 32"><path d="M6 12h20l-2 15H8z" fill="var(--violet)"/><path d="M11 12V9a5 5 0 0110 0v3" fill="none" stroke="var(--cyan)" stroke-width="2.6"/><path d="M13 17h6l2 3-5 5-5-5z" fill="#A5F3FC"/></svg>',
   more: '<svg viewBox="0 0 32 32"><circle cx="8" cy="16" r="3" fill="var(--muted)"/><circle cx="16" cy="16" r="3" fill="var(--muted)"/><circle cx="24" cy="16" r="3" fill="var(--muted)"/></svg>',

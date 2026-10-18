@@ -2,6 +2,7 @@
 import { useId } from 'react';
 import { item } from '../data/shop.js';
 import { Mascot } from './ui.jsx';
+import { useStore } from '../lib/store.js';
 
 /** Crystal coin — the app currency. */
 export function Crystal({ size = 22, className = '' }) {
@@ -110,13 +111,15 @@ export function BannerArt({ id }) {
 /** Avatar art (circle). */
 export function AvatarArt({ id }) {
   const u = useId().replace(/:/g, '');
+  const photo = useStore((s) => s.photo);
+  if (id === 'photo' && photo) return <img className="ava-art photo" src={photo} alt="" />;
   if (id === 'qalam') return <span className="ava-art qalam"><Mascot /></span>;
   let art;
   switch (id) {
     case 'moon': art = <><rect width="64" height="64" fill="#1E1B4B" /><circle cx="32" cy="32" r="20" fill="#FDE68A" /><circle cx="40" cy="26" r="18" fill="#1E1B4B" /><circle cx="22" cy="30" r="2" fill="#78350F" /><path d="M20 38 q4 3 8 0" stroke="#78350F" strokeWidth="2" fill="none" strokeLinecap="round" /><circle cx="48" cy="46" r="1.4" fill="#fff" /><circle cx="52" cy="18" r="1" fill="#fff" /></>; break;
     case 'alien': art = <><rect width="64" height="64" fill="#0F2A1C" /><path d="M24 14 l-4 -8 M40 14 l4 -8" stroke="#86EFAC" strokeWidth="2.5" strokeLinecap="round" /><circle cx="20" cy="6" r="2.5" fill="#FDE047" /><circle cx="44" cy="6" r="2.5" fill="#FDE047" /><ellipse cx="32" cy="36" rx="20" ry="24" fill="#4ADE80" /><ellipse cx="24" cy="34" rx="6" ry="8" fill="#052E16" transform="rotate(-15 24 34)" /><ellipse cx="40" cy="34" rx="6" ry="8" fill="#052E16" transform="rotate(15 40 34)" /><circle cx="22" cy="31" r="1.6" fill="#fff" /><circle cx="38" cy="31" r="1.6" fill="#fff" /><path d="M28 48 q4 3 8 0" stroke="#052E16" strokeWidth="2" fill="none" strokeLinecap="round" /></>; break;
     case 'robot': art = <><rect width="64" height="64" fill="#172033" /><line x1="32" y1="8" x2="32" y2="16" stroke="#94A3B8" strokeWidth="2.5" /><circle cx="32" cy="7" r="3" fill="#F87171" /><rect x="14" y="16" width="36" height="32" rx="9" fill="#CBD5E1" /><rect x="19" y="23" width="26" height="13" rx="6" fill="#0F172A" /><circle cx="26" cy="29.5" r="3" fill="#22D3EE" /><circle cx="38" cy="29.5" r="3" fill="#22D3EE" /><rect x="25" y="40" width="14" height="3" rx="1.5" fill="#64748B" /><rect x="20" y="50" width="24" height="10" rx="4" fill="#94A3B8" /></>; break;
-    case 'meteor': art = <><rect width="64" height="64" fill="#1A1020" /><Meteor size={64} /></>; break;
+    case 'meteor': art = <><rect width="64" height="64" fill="#1A1020" /><svg x="8" y="8" width="48" height="48" viewBox="0 0 64 64"><Meteor size={64} /></svg></>; break;
     default: art = <>
       <rect width="64" height="64" fill="#13224A" />
       <circle cx="32" cy="34" r="22" fill="#F1F5F9" /><circle cx="32" cy="34" r="22" fill="none" stroke="#94A3B8" strokeWidth="2" />
