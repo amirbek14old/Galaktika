@@ -1,0 +1,87 @@
+// Tiny global store (useSyncExternalStore) persisted to localStorage with a versioned schema.
+import { useSyncExternalStore } from 'react';
+import { dayKey, daysAgo } from './util.js';
+
+const KEY = 'galaktika';
+const VERSION = 2;
+
+const DEFAULT_OWNED = { banner: ['deep'], avatar: ['astro', 'qalam'], frame: ['none'], rocket: ['classic'] };
+const DEFAULT_EQUIP = { banner: 'deep', avatar: 'astro', frame: 'none', rocket: 'classic' };
+
+export function seed() {
+  return {
+    v: VERSION, lang: 'ru', child: 'Тимур', grade: 5, subj: 'math', sound: true,
+    xp: 95, streak: 3, lastDay: daysAgo(1), hearts: 5,
+    gems: 140, gemsEarned: 140, freezes: 0,
+    owned: structuredClone(DEFAULT_OWNED), equip: { ...DEFAULT_EQUIP },
+    done: { 'math-5-1-0': true, 'math-5-1-1': true, 'math-5-1-2': true, u1l1: true, u1l2: true, 'eng-5-1-0': true },
+    mis: { swap: { wrong: 2, fixed: 1 }, 'part-part': { wrong: 1, fixed: 1 } },
+    concepts: { meaning: { c: 5, w: 1, log: [] }, numden: { c: 3, w: 2, log: [] } },
+    hist: { [daysAgo(4)]: 10, [daysAgo(3)]: 15, [daysAgo(2)]: 25, [daysAgo(1)]: 25 },
+    stats: { answered: 31, correct: 26, secs: 780 },
+    booked: { '1-1': true },
+    ach: { 'first-planet': daysAgo(3), 'streak-3': daysAgo(1) },
+    sessions: [], flight: null, justDone: null, streakUp: null
+  };
+}
+export function blank(prev) {
+  return { ...seed(), xp: 0, streak: 0, lastDay: '', gems: 30, gemsEarned: 30, done: {}, mis: {}, concepts: {}, hist: {}, stats: { answered: 0, correct: 0, secs: 0 }, booked: {}, ach: {}, sessions: [],
+    owned: structuredClone(DEFAULT_OWNED), equip: { ...DEFAULT_EQUIP },
+    lang: prev.lang, child: prev.child, grade: prev.grade, subj: prev.subj, sound: prev.sound };
+}
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (s && s.v === VERSION) return s;
+  } catch (e) { /* storage blocked */ }
+  return seed();
+}
+let state = load();
+try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+const subs = new Set();
+
+export function getState() { return state; }
+export function setState(next) {
+  state = next;
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+  subs.forEach((f) => f());
+}
+/** Mutate a copy of the state. */
+export function update(fn) { const next = structuredClone(state); fn(next); setState(next); }
+export function useStore(sel = (s) => s) {
+  return useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, () => sel(state));
+}
+
+/* ---------- domain actions (call inside update) ---------- */
+export function recordEvidence(s, conceptId, ok, qid) {
+  if (!conceptId) return;
+  const c = s.concepts[conceptId] || (s.concepts[conceptId] = { c: 0, w: 0, log: [] });
+  ok ? c.c++ : c.w++;
+  c.log = [...(c.log || []), { ok, q: qid || '', t: Date.now() }].slice(-8);
+  c.at = Date.now();
+}
+export function addGems(s, n) { s.gems += n; s.gemsEarned = (s.gemsEarned || 0) + n; }
+
+/** XP + day streak. A saved freeze bridges exactly one missed day. Never punishes beyond a reset. */
+export function addXP(s, xp) {
+  s.xp += xp; const t = dayKey(); s.hist[t] = (s.hist[t] || 0) + xp;
+  if (s.lastDay !== t) {
+    if (s.lastDay === daysAgo(1)) s.streak += 1;
+    else if (s.lastDay === daysAgo(2) && s.freezes > 0) { s.freezes -= 1; s.streak += 1; }
+    else s.streak = 1;
+    s.lastDay = t;
+    s.streakUp = { n: s.streak, at: Date.now() };
+    if (s.streak >= 3) unlock(s, 'streak-3');
+  }
+}
+
+export const ACH_IDS = ['first-planet', 'first-diag', 'gap-closed', 'no-miss', 'frac-master', 'online-first', 'streak-3', 'first-buy'];
+let achListener = null;
+export function onAchievement(f) { achListener = f; }
+export function unlock(s, id) {
+  if (s.ach[id]) return;
+  s.ach[id] = dayKey();
+  addGems(s, 10);
+  setTimeout(() => achListener && achListener(id), 400);
+}
