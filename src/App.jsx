@@ -18,7 +18,7 @@ import { useStore, update, onAchievement, onNote, isPremium } from './lib/store.
 import { subj } from './data/subjects.js';
 import { MIS } from './data/fractions.js';
 import { allLessons, isOver, whenOf } from './data/lessons.js';
-import Onboarding from './components/Onboarding.jsx';
+import Plan from './pages/Plan.jsx';
 import { PremiumSheet, Crown } from './components/Pay.jsx';
 import { F, dayKey } from './lib/util.js';
 import { sfx } from './lib/fx.js';
@@ -27,6 +27,8 @@ import { getState } from './lib/store.js';
 
 const PAGES = {
   galaxy: { icon: 'galaxy', C: Galaxy },
+  plan: { icon: 'target', C: Plan, short: 'navs.plan' },
+  class: { icon: 'users', C: Plan, label: 'nav.class', short: 'navs.class' },
   subjects: { icon: 'menu', C: Subjects },
   diagnostic: { icon: 'diag', C: Diagnostic, short: 'navs.diagnostic' },
   online: { icon: 'live', C: Online, short: 'navs.online' },
@@ -35,12 +37,12 @@ const PAGES = {
   report: { icon: 'parents', C: ParentHome, label: 'nav.report' },
   profile: { icon: 'user', C: Profile }
 };
-const CHILD_NAV = ['galaxy', 'subjects', 'diagnostic', 'online', 'shop', 'profile'];
-const PARENT_NAV = ['report', 'online', 'shop', 'profile'];
-const TEACHER_NAV = ['teach', 'profile'];
-const MOBILE = ['galaxy', 'subjects', 'online', 'shop'];
-const MORE = ['diagnostic', 'profile'];
-const HOME = { child: 'galaxy', parent: 'report', teacher: 'teach' };
+const CHILD_NAV = ['galaxy', 'plan', 'subjects', 'diagnostic', 'online', 'shop', 'profile'];
+const PARENT_NAV = ['report', 'plan', 'online', 'profile'];
+const TEACHER_NAV = ['class', 'teach', 'profile'];
+const MOBILE = ['galaxy', 'plan', 'online', 'shop'];
+const MORE = ['subjects', 'diagnostic', 'profile'];
+const HOME = { child: 'galaxy', parent: 'report', teacher: 'class' };
 
 export default function App() {
   const t = useT();
@@ -126,9 +128,15 @@ export default function App() {
         <div className="center">
           <header className="top">
             <button className="course-pill" onClick={() => go('subjects')}><SubjGlyph s={S} size={28} /><span>{t('gradeShort', { n: s.grade })}</span></button>
-            <Stats s={s} />
+            <div className="top-r">
+              <button className="info-btn" aria-label={t('info.what')} title={t('info.what')} onClick={() => setModal(<><h2>{t('nav.' + page)}</h2><p>{t('info.' + page)}</p><button className="btn wide" onClick={() => setModal(null)}>{t('info.ok')}</button></>)}>?</button>
+              <Stats s={s} />
+            </div>
           </header>
-          <main className="main" key={page + JSON.stringify(params) + s.lang}><Page params={params} /></main>
+          <main className="main" key={page + JSON.stringify(params) + s.lang}>
+            {!s.seenInfo?.[page] && <PageInfo page={page} />}
+            <Page params={params} />
+          </main>
         </div>
         <Rail s={s} go={go} showPrem={() => showModal(<PremiumSheet />)} />
       </div>
@@ -140,7 +148,6 @@ export default function App() {
       </nav>
 
       {room && <VideoRoom lesson={room.lesson} mode={room.mode} onLeave={() => setRoom(null)} />}
-      {!s.onboarded && <Onboarding onDone={(r) => go(HOME[r] || 'galaxy')} />}
       {lesson && <Lesson cfg={lesson} onClose={(r) => { setLesson(null); if (r?.flight) update((x) => { x.flight = r.flight; }); if (r && page !== 'galaxy' && lesson.lesson) go('galaxy'); }} />}
       {modal && <div className="modal" onClick={(e) => e.target === e.currentTarget && setModal(null)}><div className="sheet" role="dialog" aria-modal="true">{modal}</div></div>}
       {showStreakUp && <StreakCelebration n={s.streakUp.n} onClose={() => update((x) => { x.streakUp = null; })} />}
@@ -161,6 +168,19 @@ export default function App() {
       </div>
     );
   }
+}
+
+/** Shown the first time a page is opened: what it is and what to do here. */
+function PageInfo({ page }) {
+  const t = useT();
+  const close = () => update((x) => { x.seenInfo = { ...(x.seenInfo || {}), [page]: true }; });
+  return (
+    <div className="page-info" role="note">
+      <Mascot className="pi-mascot" />
+      <div><b>{t('info.title')}</b><p>{t('info.' + page)}</p></div>
+      <button className="btn sm" onClick={close}>{t('info.ok')}</button>
+    </div>
+  );
 }
 
 function LangSwitch() {

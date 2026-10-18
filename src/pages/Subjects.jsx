@@ -21,7 +21,7 @@ export default function Subjects() {
       <p className="page-sub">{t('subj.sub')}</p>
       <h2 className="h2">{t('gradeH')}</h2>
       <div className="grades" role="group" aria-label={t('gradeH')}>
-        {Array.from({ length: 11 }, (_, i) => <button key={i} className={'gchip' + (g === i + 1 ? ' on' : '')} aria-pressed={g === i + 1} onClick={() => setGrade(i + 1)}>{i + 1}</button>)}
+        {[0, 1, 2].map((i) => <button key={i} className={'gchip' + (g === i + 1 ? ' on' : '')} aria-pressed={g === i + 1} onClick={() => setGrade(i + 1)}>{i + 1}</button>)}
       </div>
       <p className="band hand">{t(band)} · {t('grade', { n: g })}</p>
       <h2 className="h2">{t('galaxiesFor', { n: g })}</h2>

@@ -4,6 +4,7 @@ import { planetsFor, planetDone, subj, progressOf } from '../data/subjects.js';
 import { tt } from '../data/titles.js';
 import { theoryFor } from '../data/theory.js';
 import { SubjGlyph, I, Html, icon, Mascot, useUI } from '../components/ui.jsx';
+import { PlanCard } from './Plan.jsx';
 import { Planet } from '../components/Planet.jsx';
 import { RocketArt } from '../components/Cosmetics.jsx';
 import { burst, sfx, reducedMotion } from '../lib/fx.js';
@@ -100,6 +101,7 @@ export default function Galaxy() {
           <p className="hand">{cur ? t('greet.sub', { p: tt(cur.title, t.lang) }) : t('greet.done')}</p>
         </div>
       </section>
+      <PlanCard />
       <div className="course card">
         <SubjGlyph s={S} />
         <div className="meta"><small className="muted">{t('grade', { n: s.grade })} · {t('missionsOf', { a: pr.done, b: pr.total })}</small><h2>{t('subj.' + S.id)}</h2>

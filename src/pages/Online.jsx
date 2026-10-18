@@ -226,7 +226,7 @@ function NewLesson({ preset }) {
   const ui = useUI();
   const s = useStore();
   const soon = new Date(Date.now() + 60 * 60e3); soon.setMinutes(soon.getMinutes() < 30 ? 30 : 60, 0, 0);
-  const [f, setF] = useState({ topic: '', s: s.tSubj || 'math', g0: 5, g1: 9, kind: preset === 'now' ? 'open' : 'group', price: 30, seats: 8,
+  const [f, setF] = useState({ topic: '', s: s.tSubj || 'math', g0: 1, g1: 3, kind: preset === 'now' ? 'open' : 'group', price: 30, seats: 8,
     date: toDate(soon), time: `${pad(soon.getHours())}:${pad(soon.getMinutes())}`, dur: 45, now: preset === 'now' });
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const save = () => {
@@ -238,7 +238,7 @@ function NewLesson({ preset }) {
     update((x) => { x.lessons = [...(x.lessons || []), { id: 'my-' + Math.random().toString(36).slice(2, 8), own: true, created: Date.now(), teacher: x.child, s: f.s, g, topic, at, dur: f.dur, kind: f.kind, ...(f.kind === 'open' ? {} : { price: f.price, seats: f.seats }) }]; });
     sfx.win(); ui.closeModal(); ui.toast(t('ap.created'));
   };
-  const grades = Array.from({ length: 11 }, (_, i) => i + 1);
+  const grades = [1, 2, 3];
   return (
     <div className="ap-form">
       <h2>{t('teach.new')}</h2>

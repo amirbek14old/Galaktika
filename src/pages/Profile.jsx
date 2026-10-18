@@ -77,7 +77,7 @@ export default function Profile() {
       <h2 className="h2">{t('role.title')}</h2>
       <div className="roles">
         {['child', 'parent', 'teacher'].map((r) => (
-          <button key={r} className={'role card' + (s.role === r ? ' on' : '')} aria-pressed={s.role === r} onClick={() => { update((x) => { x.role = r; }); sfx.tap(4); ui.go({ parent: 'report', teacher: 'teach' }[r] || 'galaxy'); }}>
+          <button key={r} className={'role card' + (s.role === r ? ' on' : '')} aria-pressed={s.role === r} onClick={() => { update((x) => { x.role = r; }); sfx.tap(4); ui.go({ parent: 'report', teacher: 'class' }[r] || 'galaxy'); }}>
             <I n={{ parent: 'parents', teacher: 'teach' }[r] || 'user'} />
             <div><b>{t('role.' + r)}</b><small className="muted">{t('role.' + r + 'Sub')}</small></div>
           </button>
@@ -87,12 +87,14 @@ export default function Profile() {
         ? <div className="prem-strip card"><Crown /><p>{t('prem.active', { d: new Date(s.premium.until).toLocaleDateString(), n: s.premium.free })}</p></div>
         : <button className="prem-promo card" onClick={() => ui.showModal(<PremiumSheet />)}><Crown /><div><b>{t('prem.promo')}</b><small>{t('prem.promoSub')}</small></div><span className="btn sm prem-btn">{t('prem.more')}</span></button>}
       {s.role === 'teacher' ? <>
+        <h2 className="h2">{t('cls.myClass')}</h2>
+        <div className="grades three" role="group">{[1, 2, 3].map((n) => <button key={n} className={'gchip' + (s.grade === n ? ' on' : '')} onClick={() => update((y) => { y.grade = n; })}>{n}</button>)}</div>
         <h2 className="h2">{t('onb.subject')}</h2>
         <div className="onb-subj">{SUBJ.map((x) => <button key={x.id} className={'tchip' + (s.tSubj === x.id ? ' on' : '')} onClick={() => update((y) => { y.tSubj = x.id; })}><SubjGlyph s={x} size={24} /> {t('subj.' + x.id)}</button>)}</div>
       </> : <>
       <h2 className="h2">{s.role === 'parent' ? t('prof.childGrade') : t('prof.grade')}</h2>
       <div className="grades" role="group" aria-label={t('prof.grade')}>
-        {Array.from({ length: 11 }, (_, i) => <button key={i} className={'gchip' + (s.grade === i + 1 ? ' on' : '')} aria-pressed={s.grade === i + 1} onClick={() => { sfx.tap(i); update((x) => { x.grade = i + 1; if (subj(x.subj).from > i + 1 || subj(x.subj).to < i + 1) x.subj = 'math'; }); }}>{i + 1}</button>)}
+        {[0, 1, 2].map((i) => <button key={i} className={'gchip' + (s.grade === i + 1 ? ' on' : '')} aria-pressed={s.grade === i + 1} onClick={() => { sfx.tap(i); update((x) => { x.grade = i + 1; if (subj(x.subj).from > i + 1 || subj(x.subj).to < i + 1) x.subj = 'math'; }); }}>{i + 1}</button>)}
       </div></>}
       <div className="pstats" style={{ marginTop: 18 }}>
         <div><Meteor size={30} lit={s.streak > 0} /><b>{s.streak}</b><small>{t.pl('day', s.streak)} {t('inRowW')}</small></div>
@@ -116,8 +118,6 @@ export default function Profile() {
       <div className="setting"><div><b>{t('prof.gradeSubj')}</b><p className="muted small">{t('subj.' + subj(s.subj).id)}, {t('grade', { n: s.grade })}</p></div><button className="btn ghost sm" onClick={() => ui.go('subjects')}>{t('change')}</button></div>
       <div className="setting"><div><b>{t('nav.online')}</b></div><button className="btn ghost sm" onClick={() => ui.go('online')}>{t('open')}</button></div>
       <div className="setting"><div><b>{t('prof.sound')}</b><p className="muted small">{t('prof.soundSub')}</p></div><button className="toggle" aria-pressed={s.sound} aria-label={t('prof.sound')} onClick={() => update((x) => { x.sound = !x.sound; })} /></div>
-      <div className="setting"><div><b>{t('prof.newProfile')}</b><p className="muted small">{t('prof.newProfileSub')}</p></div>
-        <button className="btn ghost sm" onClick={() => { setState({ ...blank(getState()), child: '', premium: null, onboarded: false }); }}>{t('prof.create')}</button></div>
       <div className="setting"><div><b>{t('prof.reset')}</b><p className="muted small">{t('prof.resetSub')}</p></div>
         <button className={'btn sm ' + (sure ? 'red' : 'ghost')} onClick={() => { if (!sure) { setSure(true); return; } setState(blank(getState())); ui.toast(t('prof.resetDone')); ui.go('galaxy'); }}>{sure ? t('prof.sure') : t('prof.resetBtn')}</button></div>
       <div className="setting"><div><b>{t('prof.demo')}</b><p className="muted small">{t('prof.demoSub')}</p></div><button className="btn ghost sm" onClick={() => { setState({ ...seed(), lang: s.lang, onboarded: true }); ui.toast(t('prof.demoDone')); ui.go('galaxy'); }}>{t('prof.demoBtn')}</button></div>

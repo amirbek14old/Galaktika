@@ -61,6 +61,13 @@ Requirements: Node 18+. No backend or API keys are needed. Progress is saved in 
 
 - **"Squared notebook" design**: a white and grey page with a light grid and a red margin line, white cards and dark text. The video classroom and the streak celebration stay dark on purpose.
 
+## New in v7
+
+- **Grades 1–3 only.** Grades 4–11 have been removed. The planets, online lessons and teacher's appointments are all for primary school.
+- **"From 3 to 5" plan**: the student (or parent) marks their school grades. For every subject with a 3, a plan appears to reach a 4 or 5 by the end of the chorak (term): which missions to do, how many a week, what accuracy is needed, and a forecast (on track / close / at risk). There is a countdown to the end of the chorak (dates are approximate) and a plan card on the main page.
+- **Teacher → "My class"**: the list of students with a 3 in each subject, with progress and a forecast to the end of the chorak. Tap a student to change their grades and send the plan to the parents. The classmates are fictional (demo).
+- **No first-login screen.** The main page opens straight away. The first time you open a section, a "What's here?" hint appears, and the **?** button at the top shows it again.
+
 ## Structure
 
 ```

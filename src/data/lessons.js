@@ -15,15 +15,15 @@ const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >
 export const atOf = (d, time) => { const x = new Date(); x.setDate(x.getDate() + d); const [h, m] = time.split(':').map(Number); x.setHours(h, m, 0, 0); return x.getTime(); };
 
 const OPEN = [
-  { teacher: 'Нилуфар Каримова', s: 'math', exp: 12, topic: 'Открытый урок: математика вокруг нас', live: true },
+  { teacher: 'Нилуфар Каримова', s: 'math', exp: 12, topic: 'Открытый урок: из тройки в пятёрку по математике', live: true },
   { teacher: 'Елена Ким', s: 'eng', exp: 9, topic: 'Open class: English for everyone', d: 1, time: '19:00' },
-  { teacher: 'Азиз Рахимов', s: 'phys', exp: 15, topic: 'Открытый урок: физика на кухне', d: 2, time: '18:00' }
+  { teacher: 'Дилноза Юсупова', s: 'rus', exp: 20, topic: 'Открытый урок: пишем без ошибок', d: 2, time: '18:00' }
 ];
 
 /** Fresh every call so "today / live now" stay current. */
 export function demoLessons() {
   const out = [];
-  OPEN.forEach((o, i) => out.push({ id: 'open-' + i, teacher: o.teacher, s: o.s, g: [1, 11], exp: o.exp, topic: o.topic,
+  OPEN.forEach((o, i) => out.push({ id: 'open-' + i, teacher: o.teacher, s: o.s, g: [1, 3], exp: o.exp, topic: o.topic,
     at: o.live ? Date.now() - 6 * 60e3 : atOf(o.d, o.time), dur: 45, kind: 'open', demo: true, live: !!o.live }));
   TUTORS.forEach((tu, i) => tu.slots.forEach((sl, si) => out.push({
     id: `${i}-${si}`, teacher: tu.n, s: tu.s, g: tu.g, exp: tu.exp, topic: sl[2],

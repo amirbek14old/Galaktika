@@ -3,18 +3,18 @@ import { useSyncExternalStore } from 'react';
 import { dayKey, daysAgo } from './util.js';
 
 const KEY = 'galaktika';
-const VERSION = 4;
+const VERSION = 5;
 
 const DEFAULT_OWNED = { banner: ['deep'], avatar: ['astro', 'qalam'], frame: ['none'], rocket: ['classic'] };
 const DEFAULT_EQUIP = { banner: 'deep', avatar: 'astro', frame: 'none', rocket: 'classic' };
 
 export function seed() {
   return {
-    v: VERSION, lang: 'ru', child: 'Тимур', grade: 5, subj: 'math', sound: true,
+    v: VERSION, lang: 'ru', child: 'Тимур', grade: 2, subj: 'math', sound: true,
     xp: 95, streak: 3, lastDay: daysAgo(1), hearts: 5,
     gems: 140, gemsEarned: 140, freezes: 0,
     owned: structuredClone(DEFAULT_OWNED), equip: { ...DEFAULT_EQUIP },
-    done: { 'math-5-1-0': true, 'math-5-1-1': true, 'math-5-1-2': true, u1l1: true, u1l2: true, 'eng-5-1-0': true },
+    done: { 'math-2-1-0': true, 'eng-2-1-0': true, 'rus-2-1-0': true },
     mis: { swap: { wrong: 2, fixed: 1 }, 'part-part': { wrong: 1, fixed: 1 } },
     concepts: { meaning: { c: 5, w: 1, log: [] }, numden: { c: 3, w: 2, log: [] } },
     hist: { [daysAgo(4)]: 10, [daysAgo(3)]: 15, [daysAgo(2)]: 25, [daysAgo(1)]: 25 },
@@ -22,32 +22,41 @@ export function seed() {
     ach: { 'first-planet': daysAgo(3), 'streak-3': daysAgo(1) },
     sessions: [], flight: null, justDone: null, streakUp: null,
     role: 'child', photo: null, pushOn: false, notesSeen: 0,
-    onboarded: false, tSubj: 'math', lessons: [], joined: { '1-1': { via: 'gems', amt: 30, at: Date.now() - 864e5 } }, premium: null, payments: [],
+    onboarded: true, tSubj: 'math', marks: { math: 3, rus: 4, uzb: 5, eng: 3, nature: 4 }, goals: { math: 5, eng: 4 }, roster: {}, seenInfo: {}, lessons: [], joined: { '1-1': { via: 'gems', amt: 30, at: Date.now() - 864e5 } }, premium: null, payments: [],
     notes: [
-      { id: 'n1', at: Date.now() - 3 * 864e5, kind: 'good', key: 'perfect', v: { title: 'Знакомство' } },
-      { id: 'n2', at: Date.now() - 2 * 864e5, kind: 'bad', key: 'trap', v: { trap: 'swap' } },
-      { id: 'n3', at: Date.now() - 2 * 864e5 + 6e5, kind: 'good', key: 'planet', v: { title: 'Порядок действий' } },
+      { id: 'n1', at: Date.now() - 3 * 864e5, kind: 'good', key: 'perfect', v: { title: 'Сложение до 100' } },
+      { id: 'n2', at: Date.now() - 2 * 864e5, kind: 'bad', key: 'struggle', v: { title: 'Вычитание до 100', acc: 58 } },
+      { id: 'n3', at: Date.now() - 2 * 864e5 + 6e5, kind: 'good', key: 'planet', v: { title: 'Сложение до 100' } },
       { id: 'n4', at: Date.now() - 864e5, kind: 'info', key: 'streak', v: { n: 3 } }
     ]
   };
 }
 export function blank(prev) {
-  return { ...seed(), xp: 0, streak: 0, lastDay: '', gems: 30, gemsEarned: 30, done: {}, mis: {}, concepts: {}, hist: {}, stats: { answered: 0, correct: 0, secs: 0 }, ach: {}, sessions: [], joined: {}, payments: [], premium: prev.premium || null, lessons: prev.lessons || [], onboarded: true, tSubj: prev.tSubj || 'math',
+  return { ...seed(), xp: 0, streak: 0, lastDay: '', gems: 30, gemsEarned: 30, done: {}, mis: {}, concepts: {}, hist: {}, stats: { answered: 0, correct: 0, secs: 0 }, ach: {}, sessions: [], joined: {}, payments: [], premium: prev.premium || null, lessons: prev.lessons || [], onboarded: true, marks: prev.marks, goals: prev.goals, roster: prev.roster || {}, seenInfo: prev.seenInfo || {}, tSubj: prev.tSubj || 'math',
     owned: structuredClone(DEFAULT_OWNED), equip: { ...DEFAULT_EQUIP },
     notes: [], photo: prev.photo, role: prev.role, pushOn: prev.pushOn, notesSeen: 0,
     lang: prev.lang, child: prev.child, grade: prev.grade, subj: prev.subj, sound: prev.sound };
+}
+
+function fromV3(s) { // bookings → joined, plus the v4 fields
+  const joined = {};
+  Object.keys(s.paid || {}).forEach((k) => { if (s.paid[k]) joined[k] = { via: 'gems', amt: 30, at: Date.now() }; });
+  const { booked, paid, ...rest } = s; // eslint-disable-line no-unused-vars
+  return { ...rest, tSubj: 'math', lessons: [], joined, premium: null, payments: [] };
+}
+function toV5(s) { // grades 1–3 only, school marks, no onboarding
+  const d = seed();
+  return { ...s, v: VERSION, onboarded: true, grade: s.grade >= 1 && s.grade <= 3 ? s.grade : 2, subj: ['math', 'rus', 'eng', 'uzb', 'nature'].includes(s.subj) ? s.subj : 'math',
+    marks: s.marks || d.marks, goals: s.goals || d.goals, roster: s.roster || {}, seenInfo: s.seenInfo || {},
+    lessons: (s.lessons || []).map((l) => ({ ...l, g: [Math.min(3, l.g[0]), Math.min(3, l.g[1])] })) };
 }
 
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (s && s.v === VERSION) return s;
-    if (s && s.v === 3) { // keep progress from v3: bookings → joined, everyone else gets the new fields
-      const joined = {};
-      Object.keys(s.paid || {}).forEach((k) => { if (s.paid[k]) joined[k] = { via: 'gems', amt: 30, at: Date.now() }; });
-      const { booked, paid, ...rest } = s; // eslint-disable-line no-unused-vars
-      return { ...rest, v: VERSION, onboarded: true, tSubj: 'math', lessons: [], joined, premium: null, payments: [] };
-    }
+    if (s && (s.v === 3 || s.v === 4)) return toV5(s.v === 3 ? fromV3(s) : s);
+
   } catch (e) { /* storage blocked */ }
   return seed();
 }
