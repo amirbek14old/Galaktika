@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore, update, recordEvidence, unlock, addXP, addGems, notify } from '../lib/store.js';
+import { useStore, update, recordEvidence, unlock, addXP, addGems } from '../lib/store.js';
 import { INITIAL, priorsFor, update as bayes, nextQuestion, conclude, status, STATUS, estimate } from '../lib/diagnostic.js';
 import { CONCEPTS, MICRO } from '../data/concepts.js';
 import InlineQuestion from '../components/InlineQuestion.jsx';
@@ -50,7 +50,6 @@ export default function Diagnostic({ params }) {
     setVerdict(v); setStage('result'); sfx.win();
     update((s) => {
       unlock(s, 'first-diag'); addXP(s, 10); addGems(s, 5);
-      if (v.h && v.h !== 'slip') notify(s, 'bad', 'diag', { cause: v.h });
       s.sessions = [...(s.sessions || []), { at: Date.now(), first: first ? `${first.n}/${first.d}` : '', asked: asked.length, hypothesis: v.h, p: v.p ? Math.round(v.p * 100) : null, concept: v.concept }].slice(-10);
     });
   };
@@ -159,7 +158,7 @@ export function MicroLesson({ conceptId, onFinish, onMap }) {
       const ok = score.length === qs.reassess.length && score.every(Boolean);
       update((s) => {
         addXP(s, 15);
-        if (ok) { addGems(s, 10); unlock(s, 'gap-closed'); notify(s, 'good', 'gap', { c: conceptId }); }
+        if (ok) { addGems(s, 10); unlock(s, 'gap-closed'); }
         if (CONCEPTS.every((c) => status(s.concepts[c.id]?.c, s.concepts[c.id]?.w) === 'mastered')) unlock(s, 'frac-master');
       });
       if (ok) { confetti(); sfx.win(); }

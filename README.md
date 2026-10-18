@@ -40,14 +40,6 @@ Requirements: Node 18+. No backend or API keys are needed. Progress is saved in 
 - **Russian / O'zbekcha / English** for the interface, subjects and topic titles. Question and theory text is still in Russian.
 - Hand-drawn touches: the mascot's greeting, a "you are here!" note, and underlined headings.
 
-## New in v4
-
-- **One app for two roles**: in the profile you choose *student* or *parent* and set the grade. Parent mode opens the **Report**, which has the notifications feed, stats and tips for home.
-- **Parent notifications**: wins (a mission with no mistakes, a whole planet, a closed gap) and problems (low accuracy, a repeated trap, a diagnostic result). They can also come as browser notifications on the device.
-- **Photo avatar**: upload any picture; it's cropped to a circle and saved on the device.
-- **Video classes for crystals**: classes with professors cost 30–40 ◆, and cancelling refunds them. The classroom has an animated teacher, a board, a chat, "raise hand" and your own camera. The teacher is a demo; a real video service plugs in here.
-- New purple and dark-blue design with background planets.
-
 ## Structure
 
 ```

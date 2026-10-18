@@ -10,12 +10,9 @@ import Diagnostic from './pages/Diagnostic.jsx';
 import KnowledgeMap from './pages/KnowledgeMap.jsx';
 import Online from './pages/Online.jsx';
 import Shop from './pages/Shop.jsx';
-import ParentHome from './pages/ParentHome.jsx';
-import VideoRoom from './components/VideoRoom.jsx';
-import { Planet } from './components/Planet.jsx';
-import { noteText, showPush } from './lib/notes.js';
+import Parents from './pages/Parents.jsx';
 import Profile from './pages/Profile.jsx';
-import { useStore, update, onAchievement, onNote } from './lib/store.js';
+import { useStore, update, onAchievement } from './lib/store.js';
 import { subj } from './data/subjects.js';
 import { MIS } from './data/fractions.js';
 import { CONCEPTS } from './data/concepts.js';
@@ -33,19 +30,16 @@ const PAGES = {
   map: { icon: 'map', C: KnowledgeMap, short: 'navs.map' },
   online: { icon: 'live', C: Online, short: 'navs.online' },
   shop: { icon: 'shop', C: Shop },
-  report: { icon: 'parents', C: ParentHome, label: 'nav.report' },
+  parents: { icon: 'parents', C: Parents },
   profile: { icon: 'user', C: Profile }
 };
-const CHILD_NAV = ['galaxy', 'subjects', 'diagnostic', 'map', 'online', 'shop', 'profile'];
-const PARENT_NAV = ['report', 'map', 'online', 'profile'];
 const MOBILE = ['galaxy', 'subjects', 'diagnostic', 'shop'];
-const MORE = ['map', 'online', 'profile'];
+const MORE = ['map', 'online', 'parents', 'profile'];
 
 export default function App() {
   const t = useT();
   const initial = location.hash.slice(1);
-  const [page, setPage] = useState(PAGES[initial] ? initial : getState().role === 'parent' ? 'report' : 'galaxy');
-  const [room, setRoom] = useState(null);
+  const [page, setPage] = useState(PAGES[initial] ? initial : 'galaxy');
   const [params, setParams] = useState(null);
   const [modal, setModal] = useState(null);
   const [toasts, setToasts] = useState([]);
@@ -71,29 +65,19 @@ export default function App() {
     </>);
   }, []);
   const openLesson = useCallback((cfg) => { setLesson(cfg); sfx.tap(6); }, []);
-  const openRoom = useCallback((tutor, slot) => { setRoom({ tutor, slot }); sfx.win(); }, []);
 
   useEffect(() => { onAchievement((id) => { toast(tr(getState().lang, 'ach.toast', { x: tr(getState().lang, 'ach.' + id).split('|')[0] }) + '  +10 ◆', 'ach'); sfx.win(); }); }, [toast]);
-  useEffect(() => { document.body.style.overflow = lesson || modal || room ? 'hidden' : ''; }, [lesson, modal, room]);
-  useEffect(() => {
-    onNote((n) => {
-      const st = getState();
-      if (st.pushOn) showPush('Galaktika', noteText(n, t, st.child));
-      if (st.role === 'parent') toast(noteText(n, t, st.child), 'note');
-    });
-  }, [t.lang, toast]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { document.body.style.overflow = lesson || modal ? 'hidden' : ''; }, [lesson, modal]);
   useEffect(() => { document.documentElement.lang = s.lang; }, [s.lang]);
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape' && modal) setModal(null); };
     addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);
   }, [modal]);
 
-  const ui = { go, toast, showModal, closeModal, explainTrap, openLesson, openRoom };
+  const ui = { go, toast, showModal, closeModal, explainTrap, openLesson };
   const Page = PAGES[page].C;
   const S = subj(s.subj);
-  const label = (k, short) => t(short && PAGES[k].short ? PAGES[k].short : PAGES[k].label || 'nav.' + k);
-  const isParent = s.role === 'parent';
-  const unread = (s.notes || []).filter((n) => n.at > (s.notesSeen || 0)).length;
+  const label = (k, short) => t(short && PAGES[k].short ? PAGES[k].short : 'nav.' + k);
   const navBtn = (k, short) => (
     <button key={k} className={'nav-btn' + (page === k ? ' on' : '')} onClick={() => go(k)} aria-current={page === k ? 'page' : undefined}>
       <I n={PAGES[k].icon} /><span>{label(k, short)}</span>
@@ -109,15 +93,10 @@ export default function App() {
   return (
     <UI.Provider value={ui}>
       <Starfield />
-      <div className="bg-planets" aria-hidden="true">
-        <span className="bgp one"><Planet type="gas" hue={268} seed={77} size={340} ring /></span>
-        <span className="bgp two"><Planet type="ice" hue={225} seed={12} size={150} /></span>
-        <span className="bgp three"><Planet type="lava" hue={290} seed={41} size={90} /></span>
-      </div>
       <div className="app">
         <aside className="side" aria-label="Menu">
           <div className="logo"><Logo />Galaktika</div>
-          <nav>{(isParent ? PARENT_NAV : CHILD_NAV).map((k) => navBtn(k))}</nav>
+          <nav>{Object.keys(PAGES).map((k) => navBtn(k))}</nav>
           <div className="side-foot"><LangSwitch /></div>
         </aside>
         <div className="center">
@@ -130,17 +109,14 @@ export default function App() {
         <Rail s={s} go={go} />
       </div>
       <nav className="bnav" aria-label="Navigation">
-        {isParent ? PARENT_NAV.map((k) => navBtn(k, true)) : <>
-          {MOBILE.map((k) => navBtn(k, true))}
-          <button className={'nav-btn' + (MORE.includes(page) ? ' on' : '')} onClick={openMore}><I n="more" /><span>{t('nav.more')}</span></button>
-        </>}
+        {MOBILE.map((k) => navBtn(k, true))}
+        <button className={'nav-btn' + (MORE.includes(page) ? ' on' : '')} onClick={openMore}><I n="more" /><span>{t('nav.more')}</span></button>
       </nav>
 
-      {room && <VideoRoom tutor={room.tutor} slot={room.slot} onLeave={() => setRoom(null)} />}
       {lesson && <Lesson cfg={lesson} onClose={(r) => { setLesson(null); if (r?.flight) update((x) => { x.flight = r.flight; }); if (r && page !== 'galaxy' && lesson.lesson) go('galaxy'); }} />}
       {modal && <div className="modal" onClick={(e) => e.target === e.currentTarget && setModal(null)}><div className="sheet" role="dialog" aria-modal="true">{modal}</div></div>}
       {showStreakUp && <StreakCelebration n={s.streakUp.n} onClose={() => update((x) => { x.streakUp = null; })} />}
-      <div className="toasts" aria-live="polite">{toasts.map((x) => <div key={x.id} className={'toast ' + (x.kind || '')}>{x.kind === 'ach' && <Html className="medal" html={icon('medal')} />}{x.kind === 'note' && <I n="bell" />}{x.text}</div>)}</div>
+      <div className="toasts" aria-live="polite">{toasts.map((x) => <div key={x.id} className={'toast ' + (x.kind || '')}>{x.kind === 'ach' && <Html className="medal" html={icon('medal')} />}{x.text}</div>)}</div>
       <div id="fx" aria-hidden="true" />
     </UI.Provider>
   );
@@ -151,9 +127,7 @@ export default function App() {
       <div className="stats">
         <button className={'stat streak ' + (lit ? 'fire' : 'off')} title={t('streak')} onClick={() => setModal(<StreakSheet />)}><Meteor size={30} lit={lit} />{st.streak}</button>
         <button className="stat gem" title={t('crystalsW')} onClick={() => go('shop')}><Crystal size={22} />{st.gems}</button>
-        {st.role === 'parent'
-          ? <button className="stat bell" title={t('notes.title')} onClick={() => go('report')}><I n="bell" />{unread > 0 && <span className="badge-dot">{unread}</span>}</button>
-          : <span className="stat heart" title={t('hearts')}><I n="heart" />{st.hearts}</span>}
+        <span className="stat heart" title={t('hearts')}><I n="heart" />{st.hearts}</span>
       </div>
     );
   }
@@ -186,8 +160,8 @@ function Rail({ s, go }) {
       <div className="card"><h3>{t('rail.daily')}</h3>
         <div className="goal"><I n="bolt" /><div style={{ flex: 1 }}><div className="muted small" style={{ marginBottom: 6 }}>{t('rail.dailyText', { n: goal })}</div><div className="pbar"><div style={{ width: Math.min(100, (todayXP / goal) * 100) + '%' }} /></div></div><b>{Math.min(todayXP, goal)}/{goal}</b></div>
       </div>
-      {s.role !== 'parent' && <div className="card shop-card"><Crystal size={44} className="spin" /><div><h3>{t('nav.shop')}</h3><p className="muted small">{t('rail.shop', { n: s.gems })}</p></div>
-        <button className="btn blue wide" onClick={() => go('shop')}>{t('open')}</button></div>}
+      <div className="card shop-card"><Crystal size={44} className="spin" /><div><h3>{t('nav.shop')}</h3><p className="muted small">{t('rail.shop', { n: s.gems })}</p></div>
+        <button className="btn blue wide" onClick={() => go('shop')}>{t('open')}</button></div>
       <div className="card"><h3>{t('nav.map')}</h3>
         <p className="muted small" style={{ marginBottom: 12 }}>{t('rail.map', { a: counts.mastered || 0, b: CONCEPTS.length })}{counts.gap ? t('rail.gaps', { n: counts.gap }) : ''}</p>
         <button className="btn ghost wide" onClick={() => go('map')}>{t('rail.openMap')}</button>
